@@ -34,10 +34,6 @@ module SmartAnswer::Calculators
       }.compact
     end
 
-    def visa_types_for_outcome
-      visas_for_outcome.map { |visa| visa["name"] }
-    end
-
     def number_of_visas_for_outcome
       @number_of_visas_for_outcome ||= visas_for_outcome.count
     end
@@ -62,7 +58,7 @@ module SmartAnswer::Calculators
       COUNTRY_GROUP_BRITISH_OVERSEAS_TERRITORIES.include?(@passport_country)
     end
 
-    def passport_country_in_direct_airside_transit_visa_list?
+    def requires_a_direct_airside_transit_visa?
       COUNTRY_GROUP_DIRECT_AIRSIDE_TRANSIT_VISA.include?(@passport_country)
     end
 
@@ -74,7 +70,7 @@ module SmartAnswer::Calculators
       COUNTRY_GROUP_UK_ANCESTRY_VISA.include?(@passport_country)
     end
 
-    def passport_country_in_electronic_visa_waiver_list?
+    def has_passport_requiring_electronic_visa_waiver_list?
       COUNTRY_GROUP_ELECTRONIC_VISA_WAIVER.include?(@passport_country)
     end
 
@@ -200,6 +196,36 @@ module SmartAnswer::Calculators
 
     def travelling_visiting_partner_family_member?
       @travelling_visiting_partner_family_member_answer == "yes"
+    end
+
+    def short_work_visits_are_approved?
+      (passport_country_in_british_overseas_territories_list? ||
+        passport_country_is_taiwan? ||
+        passport_country_in_non_visa_national_list? ||
+        passport_country_in_eea?) &&
+        !travel_document?
+    end
+
+    def has_passport_requiring_no_visa?
+      (passport_country_in_non_visa_national_list? ||
+        passport_country_in_eea? ||
+        passport_country_in_british_overseas_territories_list?) &&
+        !travel_document?
+    end
+
+    def no_transit_visa_is_required?
+      passport_country_in_visa_national_list? ||
+        travel_document?
+    end
+
+    def requires_a_visitor_in_transit_visa?
+      passport_country_in_visa_national_list? ||
+        has_passport_requiring_electronic_visa_waiver_list? ||
+        travel_document?
+    end
+
+    def has_passport_allowing_school_visits?
+      passport_country_in_non_visa_national_list? || passport_country_in_british_overseas_territories_list? || passport_country_in_eea?
     end
 
     def study_or_work
